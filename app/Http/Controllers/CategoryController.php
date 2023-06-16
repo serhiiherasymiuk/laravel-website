@@ -17,6 +17,8 @@ class CategoryController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|unique:categories|max:255',
+            'image' => 'required',
+            'description' => 'required',
         ]);
 
         $category = Category::create($validatedData);
@@ -24,15 +26,15 @@ class CategoryController extends Controller
         return response()->json($category, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
+        $category = Category::findOrFail($request->id);
         $validatedData = $request->validate([
-            'name' => 'required|unique:categories|max:255',
+            'name' => 'required|unique:categories,name,' . $category->id . '|max:255',
+            'image' => 'required',
+            'description' => 'required',
         ]);
-
-        $category = Category::findOrFail($id);
         $category->update($validatedData);
-
         return response()->json($category, 200);
     }
 
@@ -40,7 +42,6 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $category->delete();
-
         return response()->json(null, 204);
     }
 }
