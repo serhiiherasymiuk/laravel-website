@@ -22,6 +22,37 @@ class CategoryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     tags={"Category"},
+     *     path="/api/category/{id}",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Category id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="number",
+     *             format="int64"
+     *         )
+     *     ),
+     *   security={{ "bearerAuth": {} }},
+     *     @OA\Response(response="200", description="List Categories."),
+     * @OA\Response(
+     *    response=404,
+     *    description="Wrong id",
+     *    @OA\JsonContent(
+     *       @OA\Property(property="message", type="string", example="Wrong category id")
+     *        )
+     *     )
+     * )
+     */
+    public function getById($id) {
+        $category = Category::findOrFail($id);
+        return response()->json($category, 200,
+            ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
     * @OA\Post(
     *     tags={"Category"},
     *     path="/api/category",
@@ -71,39 +102,44 @@ class CategoryController extends Controller
     }
 
     /**
-    * @OA\Post(
-    *     tags={"Category"},
-    *     path="/api/category/edit",
-    *     @OA\RequestBody(
-    *         @OA\MediaType(
-    *             mediaType="multipart/form-data",
-    *             @OA\Schema(
-    *                 required={"id", "name", "image", "description"},
-    *                 @OA\Property(
-    *                     property="id",
-    *                     type="number",
-    *                     format="int64",
-    *                 ),
-    *                 @OA\Property(
-    *                     property="image",
-    *                     type="string"
-    *                 ),
-    *                 @OA\Property(
-    *                     property="name",
-    *                     type="string"
-    *                 ),
-    *                 @OA\Property(
-    *                     property="description",
-    *                     type="string"
-    *                 )
-    *             )
-    *         )
-    *     ),
-    *     @OA\Response(response="200", description="Update Category.")
-    * )
+     * @OA\Post(
+     *     tags={"Category"},
+     *     path="/api/category/edit/{id}",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="number",
+     *             format="int64"
+     *         )
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name"},
+     *                 @OA\Property(
+     *                     property="image",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="description",
+     *                     type="string"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Add Category.")
+     * )
     */
-    public function update(Request $request)
+    public function update($id, Request $request)
     {
+        $category = Category::findOrFail($id);
         $input = $request->all();
         $message = array(
             'name.unique' => "Name must be unique",
@@ -122,9 +158,7 @@ class CategoryController extends Controller
             return response()->json($validator->errors(), 400, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
         }
 
-        $category = Category::findOrFail($input['id']);
         $category->update($input);
-
         return response()->json($category, 200, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
     }
 
@@ -143,15 +177,15 @@ class CategoryController extends Controller
     *     ),
     *     @OA\Response(
     *         response=200,
-    *         description="Успішне видалення категорії"
+    *         description="Category deleted"
     *     ),
     *     @OA\Response(
     *         response=404,
-    *         description="Категорії не знайдено"
+    *         description="Category not found"
     *     ),
     *     @OA\Response(
     *         response=401,
-    *         description="Не авторизований"
+    *         description="Not authorized"
     *     )
     * )
     */
