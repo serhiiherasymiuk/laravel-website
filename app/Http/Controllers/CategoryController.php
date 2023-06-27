@@ -221,6 +221,12 @@ class CategoryController extends Controller
     public function delete($id)
     {
         $category = Category::findOrFail($id);
+        if ($category->image) {
+            $oldImagePath = public_path('uploads/' . $category->image);
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+        }
         $category->delete();
         return response()->json(null, 204);
     }
