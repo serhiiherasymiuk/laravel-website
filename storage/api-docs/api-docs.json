@@ -41,7 +41,7 @@
                                 ],
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "file"
                                     },
                                     "name": {
                                         "type": "string"
@@ -158,11 +158,13 @@
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "image",
+                                    "description"
                                 ],
                                 "properties": {
                                     "image": {
-                                        "type": "string"
+                                        "type": "file"
                                     },
                                     "name": {
                                         "type": "string"
@@ -178,7 +180,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Add Category."
+                        "description": "Update Category."
                     }
                 }
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Validator;
 use Illuminate\Http\Request;
+use Intervention\Image\Facades\Image;
 
 class CategoryController extends Controller
 {
@@ -63,7 +64,7 @@ class CategoryController extends Controller
     *                 required={"name", "image", "description"},
     *                 @OA\Property(
     *                     property="image",
-    *                     type="string"
+    *                     type="file"
     *                 ),
     *                 @OA\Property(
     *                     property="name",
@@ -96,6 +97,16 @@ class CategoryController extends Controller
             return response()->json($validator->errors(), 400,
                 ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
         }
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $filename = '150_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $resizedImage = Image::make($image)->resize(150, null, function ($constraint) {
+                $constraint->aspectRatio();
+            })->encode();
+            $path = public_path('uploads/' . $filename);
+            file_put_contents($path, $resizedImage);
+            $input['image'] = $filename;
+        }
         $category = Category::create($input);
         return response()->json($category, 200,
             ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
@@ -118,10 +129,10 @@ class CategoryController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"name"},
+     *                 required={"name", "image", "description"},
      *                 @OA\Property(
      *                     property="image",
-     *                     type="string"
+     *                     type="file"
      *                 ),
      *                 @OA\Property(
      *                     property="name",
@@ -134,28 +145,46 @@ class CategoryController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response="200", description="Add Category.")
+     *     @OA\Response(response="200", description="Update Category.")
      * )
-    */
+     */
     public function update($id, Request $request)
     {
         $category = Category::findOrFail($id);
         $input = $request->all();
         $message = array(
             'name.unique' => "Name must be unique",
-            'name.required' => "Name is required",
-            'image.required' => "Image is required",
-            'description.required' => "Description is required",
+            'name.required'=>"Name is required",
+            'image.required'=>"Image is required",
+            'description.required'=>"Description is required",
         );
+
         $validator = Validator::make($input, [
-            'id' => 'required|exists:categories',
-            'name' => 'required|unique:categories,name,' . $input['id'],
+            'name' => 'required|unique:categories,name,' . $category->id,
             'image' => 'required',
             'description' => 'required'
         ], $message);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($request->hasFile('image')) {
+            if ($category->image) {
+                $oldImagePath = public_path('uploads/' . $category->image);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+
+            $image = $request->file('image');
+            $filename = '150_' . uniqid() . '.' . $image->getClientOriginalExtension();
+            $resizedImage = Image::make($image)->resize(150, null, function ($constraint) {
+                $constraint->aspectRatio();
+            })->encode();
+            $path = public_path('uploads/' . $filename);
+            file_put_contents($path, $resizedImage);
+            $input['image'] = $filename;
         }
 
         $category->update($input);
